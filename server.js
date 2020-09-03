@@ -60,13 +60,19 @@ app.get('/getMotherdata', (req, res) => {
 
 const userdat = (req, res, err, callback) => {
     var usr_dat = req.body;
+    User.findOne({Name:usr_dat.MotherName},function(err,result)
+    {
+        fatherval_id=result.Husband
+        Motherval_id=result._id
+    })
+
     User.findOne({ Name: usr_dat.Name }, function (err, Name) {
         if (Name == null) {
             const users = new User(
                 {
                     Name: req.body.Name,
-                    FatherName: req.body.FatherName,
-                    MotherName: req.body.MotherName,
+                    FatherName: fatherval_id,
+                    MotherName:  Motherval_id,
                     Gender: req.body.Gender,
                 })
             users.save()
@@ -91,8 +97,8 @@ const fatherdat = (req, res, err) => {
                 {
                     Name: req.body.FatherName,
                     Gender: "Male",
-                    Son: req.body.Name,
-                    Wife: req.body.MotherName,
+                    // Son: req.body.Name,
+                    // Wife: req.body.MotherName,
                 })
             users.save()
             // res.send(JSON.stringify(users))
@@ -106,8 +112,8 @@ const fatherdat = (req, res, err) => {
                 {
                     Name: req.body.FatherName,
                     Gender: "Male",
-                    Daughter: req.body.Name,
-                    Wife: req.body.MotherName,
+                    // Daughter: req.body.Name,
+                    // Wife: req.body.MotherName,
                 })
             users.save()
             // res.send(JSON.stringify(users))
@@ -125,14 +131,21 @@ const fatherdat = (req, res, err) => {
 }
 const motherdat = (req, res, err) => {
     var usr_dat = req.body;
+    var father_id;
+    User.findOne({Name:usr_dat.FatherName},function (err, result)
+        {
+            father_id = result._id
+        }   
+    )
     User.findOne({ Name: usr_dat.MotherName }, function (err, Name) {
         if (Name == null && (usr_dat.Gender == "Male")) {
             const users = new User(
                 {
                     Name: req.body.MotherName,
                     Gender: "Female",
-                    Son: req.body.Name,
-                    Husband: req.body.FatherName,
+                    Husband :father_id
+                    // Son: req.body.Name,
+
                 })
             users.save()
             userdat(req, res);
@@ -146,10 +159,10 @@ const motherdat = (req, res, err) => {
                 {
                     Name: req.body.MotherName,
                     Gender: "Female",
-                    Daughter: req.body.Name,
-                    Husband: req.body.FatherName,
+                    // Daughter: req.body.Name,
+                    Husband: father_id,
                 })
-            users.save()
+            users.save()    
             userdat(req, res);
             // res.send(JSON.stringify(users))
             // res.sendStatus(200)
