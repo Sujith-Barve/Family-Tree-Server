@@ -27,6 +27,7 @@ app.post('/create-person', (req, res) => {
     // console.log(req);
     // userdat(req,res);
     fatherdat(req, res);
+    console.log("dsadsadsadsadasdasd")
     // motherdat(req,res)
 
 })
@@ -58,31 +59,90 @@ app.get('/getMotherdata', (req, res) => {
     })
 })
 
-const userdat = (req, res, err, callback) => {
+const userdat = (req, res, fatherId, motherId) => {
     var usr_dat = req.body;
-    User.findOne({Name:usr_dat.MotherName},function(err,result)
-    {
-        fatherval_id=result.Husband
-        Motherval_id=result._id
-    })
-
     User.findOne({ Name: usr_dat.Name }, function (err, Name) {
-        if (Name == null) {
-            const users = new User(
-                {
-                    Name: req.body.Name,
-                    FatherName: fatherval_id,
-                    MotherName:  Motherval_id,
-                    Gender: req.body.Gender,
+        if (Name == null)
+        {
+            if(usr_dat.Gender=="Male") {
+                const users = new User(
+                    {
+                        Name: req.body.Name,
+                        FatherName: fatherId,
+                        MotherName: motherId,
+                        Gender: req.body.Gender,
+                    })
+                users.save(function (err) {
+                    console.log("New user created: " + JSON.stringify(users))
+                    User.findByIdAndUpdate(
+                        { _id: fatherId },
+                        { Wife: motherId, Son: users._id },
+                        function(err, result) {
+                          if (err) {
+                           console.log("cant update father",err)
+                          } else {
+                            console.log("updated father");
+                          }
+                        }
+                      );
+                    User.findByIdAndUpdate(
+                        {_id:motherId},
+                        {Son:users._id},
+                        function(err, result) {
+                            if (err) {
+                             console.log("cant update mother",err)
+                            } else {
+                              console.log("updated mother");
+                            }
+                          }
+    
+                    )
                 })
-            users.save()
-            // res.sendStatus(200)
-            res.send(JSON.stringify(users))
-            console.log("Ok");
-            console.error(err);
-        }
+                res.send(JSON.stringify(users))
+                console.log("Ok");
+                console.error(err);
+            }
+            else if(usr_dat.Gender=="Female")
+            {
+                const users = new User(
+                    {
+                        Name: req.body.Name,
+                        FatherName: fatherId,
+                        MotherName: motherId,
+                        Gender: req.body.Gender,
+                    })
+                users.save(function (err) {
+                    console.log("New user created: " + JSON.stringify(users))
+                    User.findByIdAndUpdate(
+                        { _id: fatherId },
+                        { Wife: motherId, Daughter: users._id },
+                        function(err, result) {
+                          if (err) {
+                           console.log("cant update father",err)
+                          } else {
+                            console.log("updated father");
+                          }
+                        }
+                      );
+                    User.findByIdAndUpdate(
+                        {_id:motherId},
+                        {Daughter:users._id},
+                        function(err, result) {
+                            if (err) {
+                             console.log("cant update mother",err)
+                            } else {
+                              console.log("updated mother");
+                            }
+                          }
+    
+                    )
+                })
+                res.send(JSON.stringify(users))
+                console.log("Ok");
+                console.error(err);
+            }
+        } 
         else {
-            // res.sendStatus(403)
             console.log("user exists")
         }
     }
@@ -91,90 +151,92 @@ const userdat = (req, res, err, callback) => {
 }
 const fatherdat = (req, res, err) => {
     var usr_dat = req.body;
-    User.findOne({ Name: usr_dat.FatherName }, function (err, Name) {
-        if (Name == null && (usr_dat.Gender == "Male")) {
-            const users = new User(
-                {
-                    Name: req.body.FatherName,
-                    Gender: "Male",
-                    // Son: req.body.Name,
-                    // Wife: req.body.MotherName,
-                })
-            users.save()
-            // res.send(JSON.stringify(users))
-            // res.sendStatus(200)
-            console.log("Ok");
-            console.error(err)
-            motherdat(req, res)
-        }
-        else if (Name == null && (usr_dat.Gender == "Female")) {
-            const users = new User(
-                {
-                    Name: req.body.FatherName,
-                    Gender: "Male",
-                    // Daughter: req.body.Name,
-                    // Wife: req.body.MotherName,
-                })
-            users.save()
-            // res.send(JSON.stringify(users))
-            // res.sendStatus(200)
-            console.log("Ok");
-            console.error(err)
-            motherdat(req, res)
-        }
+    if (usr_dat.ManualEntryFather == true && usr_dat.Gender == "Male") {
+        const users = new User(
+            {
+                Name: req.body.FatherName,
+                Gender: "Male",
+                // Son: req.body.Name,
+                // Wife: req.body.MotherName,
+            }
+        )
+        users.save(function (err) {
+            console.log("FatherID: " + users._id)
+            motherdat(req, res, users._id)
+        })
+    }
+    else if (usr_dat.ManualEntryFather == true && (usr_dat.Gender == "Female")) {
+        const users = new User(
+            {
+                Name: req.body.FatherName,
+                Gender: "Male",
+                Daughter: req.body.Name,
+               
+            })
+            users.save(function (err) {
+                console.log("FatherID: " + users._id)
+                motherdat(req, res, users._id)
+            })
+    }
 
-        else {
-            motherdat(req, res)
-            // userdat(req, res);
-        }
-    })
+    // else {
+    //     motherdat(req, res)
+    //     // userdat(req, res);
+    // }
+
 }
-const motherdat = (req, res, err) => {
+
+// User.findOne({ Name: usr_dat.FatherName }, function (err, Name) {
+//     if (Name == null && (usr_dat.Gender == "Male")) {
+//         const users = new User(
+//             {
+//                 Name: req.body.FatherName,
+//                 Gender: "Male",
+//                 Son: req.body.Name,
+//                 Wife: req.body.MotherName,
+//             })
+//         users.save()
+//         // res.send(JSON.stringify(users))
+//         // res.sendStatus(200)
+//         console.log("Ok");
+//         console.error(err)
+//         motherdat(req, res)
+//     }
+       
+const motherdat = (req, res, husbandId) => {
     var usr_dat = req.body;
-    var father_id;
-    User.findOne({Name:usr_dat.FatherName},function (err, result)
-        {
-            father_id = result._id
-        }   
-    )
-    User.findOne({ Name: usr_dat.MotherName }, function (err, Name) {
-        if (Name == null && (usr_dat.Gender == "Male")) {
+    
+        if (usr_dat.ManualEntryFather == true && (usr_dat.Gender == "Male")) {
             const users = new User(
                 {
                     Name: req.body.MotherName,
                     Gender: "Female",
-                    Husband :father_id
-                    // Son: req.body.Name,
-
-                })
-            users.save()
-            userdat(req, res);
-            // res.send(JSON.stringify(users))
-            // res.sendStatus(200)
-            console.log("Ok");
-            console.error(err)
+                    Son: req.body.Name,
+                    Husband: husbandId,
+                }
+            )
+            users.save(function (err) {
+                console.log("Mother ID: " + users._id)
+                userdat(req, res,husbandId,users._id);
+            })
         }
         else if (Name == null && (usr_dat.Gender == "Female")) {
             const users = new User(
                 {
                     Name: req.body.MotherName,
                     Gender: "Female",
-                    // Daughter: req.body.Name,
-                    Husband: father_id,
-                })
-            users.save()    
-            userdat(req, res);
-            // res.send(JSON.stringify(users))
-            // res.sendStatus(200)
-            console.log("Ok");
-            console.error(err)
+                    Daughter: req.body.Name,
+                    Husband: husbandId,
+                }
+            )
+            users.save(function (err) {
+                console.log("Mother ID: " + users._id)
+                userdat(req, res,husbandId,users._id);
+            })
         }
+    }
 
-        else {
-            userdat(req, res);
-        }
-    })
-}
+
 // const senddata = () => {
 //     app.post('/send-data', (req, res) => {
 //         console.log(req);

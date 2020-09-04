@@ -10,6 +10,12 @@ const UserSchema = new mongoose.Schema
     Husband : String,
     Gender : String,
     Daughter : String,
+    ManualEntryFather : Boolean,
+    ManualEntryMother :Boolean,
+    MarriageStatus : String,
+    WifeName : String,
+    ChildName : String,
+    ChildGender :String,
 });
 
 
