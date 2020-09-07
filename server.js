@@ -74,7 +74,7 @@ const userdat = (req, res, fatherId, motherId) => {
                     console.log("New user created: " + JSON.stringify(users))
                     User.findByIdAndUpdate(
                         { _id: fatherId },
-                        { Wife: motherId, Son: users._id },
+                        {$push:{ Wife: motherId, Son: users._id} },
                         function(err, result) {
                           if (err) {
                            console.log("cant update father",err)
@@ -85,7 +85,7 @@ const userdat = (req, res, fatherId, motherId) => {
                       );
                     User.findByIdAndUpdate(
                         {_id:motherId},
-                        {Son:users._id},
+                        {$push:{Son:users._id}},
                         function(err, result) {
                             if (err) {
                              console.log("cant update mother",err)
@@ -93,7 +93,6 @@ const userdat = (req, res, fatherId, motherId) => {
                               console.log("updated mother");
                             }
                           }
-    
                     )
                 })
                 res.send(JSON.stringify(users))
@@ -113,7 +112,7 @@ const userdat = (req, res, fatherId, motherId) => {
                     console.log("New user created: " + JSON.stringify(users))
                     User.findByIdAndUpdate(
                         { _id: fatherId },
-                        { Wife: motherId, Daughter: users._id },
+                        { $push:{Wife :motherId, Daughter: users._id} },
                         function(err, result) {
                           if (err) {
                            console.log("cant update father",err)
@@ -124,7 +123,7 @@ const userdat = (req, res, fatherId, motherId) => {
                       );
                     User.findByIdAndUpdate(
                         {_id:motherId},
-                        {Daughter:users._id},
+                        {$push : {Daughter:users._id}},
                         function(err, result) {
                             if (err) {
                              console.log("cant update mother",err)
@@ -191,7 +190,9 @@ const fatherdat = (req, res, err) => {
     }
     else if (usr_dat.ManualEntryFather== false && usr_dat.ManualEntryMother==false)
     {
-        userdat(req, res)
+        console.log("req.body.Father_ID,req.body.Mother_ID" + req.body.Father_ID,req.body.Mother_ID)
+        userdat(req, res,req.body.Father_ID,req.body.Mother_ID)
+
     }
 
 
@@ -227,7 +228,6 @@ const motherdat = (req, res, husbandId) => {
                 {
                     Name: req.body.MotherName,
                     Gender: "Female",
-                    Son: req.body.Name,
                     Husband: husbandId,
                 }
             )
@@ -241,7 +241,7 @@ const motherdat = (req, res, husbandId) => {
                 {
                     Name: req.body.MotherName,
                     Gender: "Female",
-                    Daughter: req.body.Name,
+                    // Daughter: req.body.Name,
                     Husband: husbandId,
                 }
             )
