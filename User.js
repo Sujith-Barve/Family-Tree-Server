@@ -16,6 +16,9 @@ const UserSchema = new mongoose.Schema
     WifeName : String,
     ChildName : String,
     ChildGender :String,
+    Father_ID: String,
+    Mother_ID : String,
+
 });
 
 
