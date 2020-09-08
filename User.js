@@ -1,7 +1,8 @@
 const mongoose = require('mongoose')
 
 const UserSchema = new mongoose.Schema
-({
+({  
+    App_userID:String,
     Name:String,
     FatherName : String,
     MotherName : String,

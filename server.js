@@ -69,6 +69,7 @@ const userdat = (req, res, fatherId, motherId) => {
                         FatherName: fatherId,
                         MotherName: motherId,
                         Gender: req.body.Gender,
+                        App_UserID : req.body.App_UserID
                     })
                 users.save(function (err) {
                     console.log("New user created: " + JSON.stringify(users))
