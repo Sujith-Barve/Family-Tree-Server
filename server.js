@@ -56,6 +56,16 @@ app.get('/getMotherdata', (req, res) => {
         console.log(err)
     })
 })
+app.get('/familysuggestion?App_userID',(req,res)=>{
+    console.log("App_User_ID is "+ req.query.App_userID +"Url is"+req.baseUrl +"Original Url is"+req.originalUrl)
+    User.find({App_userID:req.query.App_userID}).then(data =>{
+        res.send(data)
+        console.log(data)
+    }).catch(err => 
+        {
+            console.log(err);
+        })
+})
 
 const userdat = (req, res, fatherId, motherId) => {
     var usr_dat = req.body;
@@ -72,6 +82,7 @@ const userdat = (req, res, fatherId, motherId) => {
                         App_UserID : req.body.App_UserID
                     })
                 users.save(function (err) {
+                    console.log("Appuser ID" + req.body.App_UserID)
                     console.log("New user created: " + JSON.stringify(users))
                     User.findByIdAndUpdate(
                         { _id: fatherId },
