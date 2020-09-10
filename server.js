@@ -39,25 +39,33 @@ app.post('/create-person', (req, res) => {
 //     })   
 // })
 app.get('/getfatherdata', (req, res) => {
-    User.find({ Gender: "Male" }).then(data => {
+    Age=req.query.Age
+    User.find({
+        $and : [ 
+            {Gender: "Male" }, 
+             {Age: {$gte :(Age+10)}}
+            ]
+             })
+        .then(data => {
         res.send(data)
         // res.send(data.id)
         console.log(data)
+        
     }).catch(err => {
         console.log(err)
     })
 })
 app.get('/getMotherdata', (req, res) => {
-    User.find({ Gender: "Female" }).then(data => {
+    User.find({ Gender: "Female"}).then(data => {
         res.send(data)
         // res.send(data.id)
         console.log(data)
     }).catch(err => {
-        console.log(err)
+        console.log(err)    
     })
 })
-app.get('/familysuggestion?App_userID',(req,res)=>{
-    console.log("App_User_ID is "+ req.query.App_userID +"Url is"+req.baseUrl +"Original Url is"+req.originalUrl)
+app.get('/familysuggestion',(req,res)=>{
+    console.log("App_User_ID is "+  App_userID +"Url is"+req.baseUrl +"Original Url is"+req.originalUrl)
     User.find({App_userID:req.query.App_userID}).then(data =>{
         res.send(data)
         console.log(data)
@@ -79,7 +87,11 @@ const userdat = (req, res, fatherId, motherId) => {
                         FatherName: fatherId,
                         MotherName: motherId,
                         Gender: req.body.Gender,
-                        App_UserID : req.body.App_UserID
+                        App_UserID : req.body.App_UserID,
+                        Age : req.body.Age,
+                        WifeName : req.body.WifeName,
+                        ChildName : req.body.ChildName,
+                        ChildGender :req.body.ChildGender
                     })
                 users.save(function (err) {
                     console.log("Appuser ID" + req.body.App_UserID)

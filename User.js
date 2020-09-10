@@ -4,6 +4,7 @@ const UserSchema = new mongoose.Schema
 ({  
     App_userID:String,
     Name:String,
+    Age : Number,
     FatherName : String,
     MotherName : String,
     Son :[String],
@@ -19,7 +20,8 @@ const UserSchema = new mongoose.Schema
     ChildGender :String,
     Father_ID: String,
     Mother_ID : String,
-    Siblings :[String]
+    Siblings :[String],
+    ChildGender : String
 
 });
 
