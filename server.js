@@ -64,34 +64,70 @@ app.get('/getMotherdata', (req, res) => {
         console.log(err)
     })
 })
-app.get('/getname', (req, res) => {
-    User.find({ _id: req.query.Personid }).then(data => {
-        res.send(data)
-        // res.send(data.id)
-        console.log(data)
-    }).catch(err => {
-        console.log(err)
-    })
+app.get('/getname', async (req, res) => {
+    User.find({ _id: req.query.Personid }).select('Name -_id')
+        .then(data => {
+            // res.send(data.id)
+            console.log(data[0])
+        }).catch(err => {
+            console.log(err)
+        })
 })
+
+async function IdToName(Id) {
+    console.log("Entered to Id to Name");
+    return User.find({ _id: Id }).select('Name').exec()
+        .then(data => {
+            console.log(data)
+            return data[0]
+        }).catch(err => {
+            console.log(err);
+        })
+
+
+}
 
 app.get('/familysuggestion', (req, res) => {
     console.log("Entered Family Suggestion and App_User_ID is " + req.query.App_userID)
     User.find({ App_userID: req.query.App_userID }).then(data => {
         res.send(data)
-        console.log(data)
+        console.log("Response data is ", data)
     }).catch(err => {
         console.log(err);
     })
 })
+var arr = [];
 app.get('/familysuggestionfetching', (req, res) => {
     console.log("Entered Family Suggestion and Key is " + req.query.familysearchid)
-    User.find({ _id: req.query.familysearchid }).then(data => {
-        res.send(data)
-        console.log(data)
-    }).catch(err => {
-        console.log(err);
-    })
+    User.find({ _id: req.query.familysearchid })
+        .then(async data => {
+            var _father = await IdToName(data[0].FatherName)
+            var _mother = await IdToName(data[0].MotherName)
+            var _user = { _id: req.query.familysearchid, Name: data[0].Name }
+
+            var responsearray = {
+                Name: _user,
+                FatherData: _father,
+                MotherData: _mother
+            };
+            // arr.push(
+            //     {
+
+            //     } 
+            // )
+            res.send(responsearray)
+            console.log("data sent is  ", responsearray)
+        })
+        .catch(err => {
+            console.log(err);
+        })
 })
+
+
+IdToName('5f5886df47f6a64c8a9e43e3')
+
+
+
 
 const userdat = (req, res, fatherId, motherId) => {
     var usr_dat = req.body;
