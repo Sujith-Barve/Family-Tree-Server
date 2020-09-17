@@ -101,6 +101,7 @@ app.get('/familysuggestionfetching', (req, res) => {
     console.log("Entered Family Suggestion and Key is " + req.query.familysearchid)
     User.find({ _id: req.query.familysearchid })
         .then(async data => {
+            console.log("Fetch data is", data)
             var _father = await IdToName(data[0].FatherName)
             var _mother = await IdToName(data[0].MotherName)
             var _user = { _id: req.query.familysearchid, Name: data[0].Name }
@@ -124,7 +125,7 @@ app.get('/familysuggestionfetching', (req, res) => {
 })
 
 
-IdToName('5f5886df47f6a64c8a9e43e3')
+// IdToName('5f5886df47f6a64c8a9e43e3')
 
 
 
@@ -133,7 +134,7 @@ const userdat = (req, res, fatherId, motherId) => {
     var usr_dat = req.body;
     User.findOne({ Name: usr_dat.Name }, function (err, Name) {
         if (Name == null) {
-            if (usr_dat.Gender == "Male") {
+            if (usr_dat.Gender == "Male" && usr_dat.MarriageStatus == "Bachelor") {
                 const users = new User(
                     {
                         Name: req.body.Name,
@@ -141,10 +142,7 @@ const userdat = (req, res, fatherId, motherId) => {
                         MotherName: motherId,
                         Gender: req.body.Gender,
                         App_UserID: req.body.App_UserID,
-                        Age: req.body.Age,
-                        WifeName: req.body.WifeName,
-                        ChildName: req.body.ChildName,
-                        ChildGender: req.body.ChildGender
+
                     })
                 users.save(function (err) {
                     console.log("Appuser ID" + req.body.App_UserID)
@@ -171,6 +169,82 @@ const userdat = (req, res, fatherId, motherId) => {
                             }
                         }
                     )
+
+                })
+                res.send(JSON.stringify(users))
+                console.log("Ok");
+                console.error(err);
+            }
+            else if (usr_dat.Gender == "Male" && usr_dat.MarriageStatus == "Married") {
+                if (usr_dat.ManualEntrySpouse == true) {
+                    if (usr_dat.Havingchildren == "Yes") {
+                        const users = new User(
+                            {
+                                Name: req.body.Name,
+                                FatherName: fatherId,
+                                MotherName: motherId,
+                                Gender: req.body.Gender,
+                                App_UserID: req.body.App_UserID,
+                                WifeName: req.body.WifeName,
+                                ChildName: req.body.ChildName,
+                                ChildGender: req.body.ChildGender
+
+
+                            })
+                    }
+                    else {
+                        const users = new User(
+                            {
+                                Name: req.body.Name,
+                                FatherName: fatherId,
+                                MotherName: motherId,
+                                Gender: req.body.Gender,
+                                App_UserID: req.body.App_UserID,
+                                WifeName: req.body.WifeName,
+
+
+                            })
+                    }
+                }
+                else {
+                    const users = new User(
+                        {
+                            Name: req.body.Name,
+                            FatherName: fatherId,
+                            MotherName: motherId,
+                            Gender: req.body.Gender,
+                            App_UserID: req.body.App_UserID,
+                            WifeName: req.body.Spouse_ID
+
+
+                        })
+                }
+                users.save(function (err) {
+                    console.log("Appuser ID" + req.body.App_UserID)
+                    console.log("New user created: " + JSON.stringify(users))
+                    User.findByIdAndUpdate(
+                        { _id: fatherId },
+                        { $push: { Wife: motherId, Son: users._id } },
+                        function (err, result) {
+                            if (err) {
+                                console.log("cant update father", err)
+                            } else {
+                                console.log("updated father");
+                            }
+                        }
+                    );
+                    User.findByIdAndUpdate(
+                        { _id: motherId },
+                        { $push: { Son: users._id } },
+                        function (err, result) {
+                            if (err) {
+                                console.log("cant update mother", err)
+                            } else {
+                                console.log("updated mother");
+                            }
+                        }
+                    )
+
                 })
                 res.send(JSON.stringify(users))
                 console.log("Ok");

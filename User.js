@@ -14,14 +14,17 @@ const UserSchema = new mongoose.Schema
         Daughter: [String],
         ManualEntryFather: Boolean,
         ManualEntryMother: Boolean,
+        ManualEntrySpouse: Boolean,
         MarriageStatus: String,
         WifeName: [{ type: String, unique: true }],
         ChildName: String,
         ChildGender: String,
         Father_ID: String,
         Mother_ID: String,
+        Spouse_ID: String,
         Siblings: [String],
         ChildGender: String,
+        Havingchildren: String
 
 
     });
