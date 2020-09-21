@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema
         MotherName: String,
         Son: [String],
         Wife: [String],
-        Husband: String,
+        Husband: [String],
         Gender: String,
         Daughter: [String],
         ManualEntryFather: Boolean,
@@ -17,14 +17,16 @@ const UserSchema = new mongoose.Schema
         ManualEntrySpouse: Boolean,
         MarriageStatus: String,
         WifeName: [{ type: String, unique: true }],
-        ChildName: String,
+        ChildrenName: [String],
         ChildGender: String,
         Father_ID: String,
         Mother_ID: String,
         Spouse_ID: String,
         Siblings: [String],
         ChildGender: String,
-        Havingchildren: String
+        Havingchildren: String,
+        Havingsibling: String
+
 
 
     });
