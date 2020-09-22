@@ -2,7 +2,11 @@ const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
+const CircularJSON = require('circular-json');
 require('./User')
+mongoose.set('useFindAndModify', false);
+// mongoose.set('useNewUrlParser', true);
+mongoose.set('useCreateIndex', true);
 
 app.use(bodyParser.json())
 
@@ -26,7 +30,8 @@ mongoose.connection.on("error", (err) => {
 app.post('/create-person', (req, res) => {
     // console.log(req);
     // userdat(req,res);
-    // console.log("Siblings are added " + JSON.stringify(req))
+    var serialized = CircularJSON.stringify(req.body);
+    console.log("Siblings are added " + serialized)
     fatherdat(req, res);
     // motherdat(req,res)
 })
@@ -50,7 +55,7 @@ app.get('/getfatherdata', (req, res) => {
         .then(data => {
             res.send(data)
             // res.send(data.id)
-            console.log(data)
+            // console.log(data)
 
         }).catch(err => {
             console.log(err)
@@ -60,7 +65,7 @@ app.get('/getMotherdata', (req, res) => {
     User.find({ Gender: "Female" }).then(data => {
         res.send(data)
         // res.send(data.id)
-        console.log(data)
+        // console.log(data)
     }).catch(err => {
         console.log(err)
     })
@@ -87,12 +92,12 @@ async function IdToName(Id) {
 
 
 }
-
+var sibling_array = [];
 app.get('/familysuggestion', (req, res) => {
     console.log("Entered Family Suggestion and App_User_ID is " + req.query.App_userID)
     User.find({ App_userID: req.query.App_userID }).then(data => {
         res.send(data)
-        console.log("Response data is ", data)
+        // console.log("Response data is ", data)
     }).catch(err => {
         console.log(err);
     })
@@ -118,7 +123,7 @@ app.get('/familysuggestionfetching', (req, res) => {
             //     } 
             // )
             res.send(responsearray)
-            console.log("data sent is  ", responsearray)
+            // console.log("data sent is  ", responsearray)
         })
         .catch(err => {
             console.log(err);
@@ -127,10 +132,6 @@ app.get('/familysuggestionfetching', (req, res) => {
 
 
 // IdToName('5f5886df47f6a64c8a9e43e3')
-
-
-
-
 const userdat = (req, res, fatherId, motherId) => {
     var usr_dat = req.body;
     User.findOne({ Name: usr_dat.Name }, function (err, Name) {
@@ -146,8 +147,10 @@ const userdat = (req, res, fatherId, motherId) => {
                     })
                 users.save(function (err) {
                     //For Siblings
+                    console.log("User ID : " + users + err)
                     console.log("Entered User Creation")
-                    for (var i = 0; i < req.body.Siblings.length - 1; i++) {
+
+                    for (var i = 0; i < req.body.Siblings.length; i++) {
                         console.log("SiblinG Length is " + req.body.Siblings.length)
                         const sibling = new User(
                             {
@@ -157,11 +160,12 @@ const userdat = (req, res, fatherId, motherId) => {
 
 
                             })
+
                         sibling.save(() => {
-                            console.log("Entered Sibling Data" + req.body.Siblings[i])
+                            console.log("Entered Sibling Data" + req.body.Siblings[i] + "Users id is ", users._id)
                             User.findByIdAndUpdate(
                                 { _id: fatherId },
-                                { $push: { Son: users._id } },
+                                { $push: { Son: sibling._id } },
                                 function (err, result) {
                                     if (err) {
                                         console.log("cant update father", err)
@@ -172,7 +176,7 @@ const userdat = (req, res, fatherId, motherId) => {
                             );
                             User.findByIdAndUpdate(
                                 { _id: motherId },
-                                { $push: { Son: users._id } },
+                                { $push: { Son: sibling._id } },
                                 function (err, result) {
                                     if (err) {
                                         console.log("cant update mother", err)
@@ -181,6 +185,30 @@ const userdat = (req, res, fatherId, motherId) => {
                                     }
                                 }
                             )
+                            User.findByIdAndUpdate(
+                                { _id: users._id },
+                                { $push: { Siblings: sibling._id } },
+                                function (err, result) {
+                                    if (err) {
+                                        console.log("cant update User", err)
+                                    } else {
+                                        console.log("updated User");
+                                    }
+                                }
+                            )
+
+                            User.findByIdAndUpdate(
+                                { _id: sibling._id },
+                                { $push: { Siblings: users._id } },
+                                function (err, result) {
+                                    if (err) {
+                                        console.log("cant update Sibling User", err)
+                                    } else {
+                                        console.log(" Sibling User Updated");
+                                    }
+                                }
+                            )
+
 
 
 
@@ -189,7 +217,7 @@ const userdat = (req, res, fatherId, motherId) => {
                     }
 
                     // For Users
-                    // console.log("Appuser ID" + req.body.App_UserID)
+                    console.log("Appuser ID" + req.body.App_UserID)
                     console.log("New user created: " + JSON.stringify(users))
                     User.findByIdAndUpdate(
                         { _id: fatherId },
@@ -201,7 +229,7 @@ const userdat = (req, res, fatherId, motherId) => {
                                 console.log("updated father");
                             }
                         }
-                    );
+                    )
                     User.findByIdAndUpdate(
                         { _id: motherId },
                         { $push: { Son: users._id } },
@@ -228,35 +256,158 @@ const userdat = (req, res, fatherId, motherId) => {
                             }
                         }
                     )
-                    if (req.body.MarriageStatus == "Married") {
-                        if (usr_dat.ManualEntrySpouse == true) {
-                            User.findByIdAndUpdate(
-                                {
-                                    _id: users._id
-                                },
-                                {
-                                    WifeName: req.body.WifeName,
-                                })
+
+                    // if (req.body.MarriageStatus == "Married") {
+                    //     if (usr_dat.ManualEntrySpouse == true) {
+                    //         if (req.body.Wife != null) {
+                    //             const wifeu = new User(
+                    //                 {
+                    //                     Name: req.body.Wife,
+                    //                     Husband: users._id
+
+                    //                 })
+                    //             wifeu.save(() => {
+                    //                 // console.log("Entered Sibling Data" + req.body.Siblings[i] + "Users id is ", users._id)
+                    //                 User.findByIdAndUpdate(
+                    //                     { _id: users._id },
+                    //                     { $push: { Wife: wifeu._id } },
+                    //                     function (err, result) {
+                    //                         if (err) {
+                    //                             console.log("cant update wife of user", err)
+                    //                         } else {
+                    //                             console.log("updated wife of user");
+                    //                         }
+                    //                     }
+                    //                 );
+                    //                 if (req.body.Havingchildren == "Yes") {
+                    //                     for (var i = 0; i < req.body.Son.length; i++) {
+
+                    //                         const bodychildren = new User(
+                    //                             {
+                    //                                 Name: req.body.Son[i],
 
 
-                        }
-                        else {
-                            User.findByIdAndUpdate(
-                                {
-                                    _id: users._id
-                                },
-                                {
-                                    WifeName: req.body.Spouse_ID,
-                                })
+                    //                             })
+                    //                     }
+                    //                     bodychildren.save(() => {
+                    //                         console.log("Entered Sibling Data" + req.body.Son[i] + "Users id is ", users._id)
+                    //                         User.findByIdAndUpdate(
+                    //                             { _id: users._id },
+                    //                             { $push: { Son: bodychildren._id } },
+                    //                             function (err, result) {
+                    //                                 if (err) {
+                    //                                     console.log("cant update father", err)
+                    //                                 } else {
+                    //                                     console.log("updated father");
+                    //                                 }
+                    //                             }
+                    //                         );
+                    //                         User.findByIdAndUpdate(
+                    //                             { _id: req.body.Son[i] },
+                    //                             { $push: { FatherName: users._id }, MotherName: wifeu._id },
+                    //                             function (err, result) {
+                    //                                 if (err) {
+                    //                                     console.log("cant update SOn data", err)
+                    //                                 } else {
+                    //                                     console.log("updated Son data");
+                    //                                 }
+                    //                             }
+                    //                         )
+                    //                         User.findByIdAndUpdate(
+                    //                             { _id: wifeu._id },
+                    //                             { $push: { Son: bodychildren.id }, },
+                    //                             function (err, result) {
+                    //                                 if (err) {
+                    //                                     console.log("cant update SOn data", err)
+                    //                                 } else {
+                    //                                     console.log("updated Son data");
+                    //                                 }
+                    //                             }
+                    //                         )
 
-                        }
-                    }
+
+
+                    //                     })
+                    //                 }
+
+                    //             })
+                    //         }
+                    //     }
+                    //     else {
+
+                    //         if (req.body.Havingchildren == "Yes") {
+                    //             for (var i = 0; i < req.body.Son.length; i++) {
+
+                    //                 const bodychildren = new User(
+                    //                     {
+                    //                         Name: req.body.Son[i],
+
+
+
+                    //                     })
+                    //             }
+                    //             bodychildren.save(() => {
+                    //                 console.log("Entered Sibling Data" + req.body.Son[i] + "Users id is ", users._id)
+                    //                 User.findByIdAndUpdate(
+                    //                     { _id: users._id },
+                    //                     { $push: { Son: bodychildren._id }, Wife: req.body.Spouse_ID },
+                    //                     function (err, result) {
+                    //                         if (err) {
+                    //                             console.log("cant update father", err)
+                    //                         } else {
+                    //                             console.log("updated father");
+                    //                         }
+                    //                     }
+                    //                 );
+                    //                 User.findByIdAndUpdate(
+                    //                     { _id: req.body.Son[i] },
+                    //                     { $push: { FatherName: users._id }, MotherName: req.body.Spouse_ID },
+                    //                     function (err, result) {
+                    //                         if (err) {
+                    //                             console.log("cant update SOn data", err)
+                    //                         } else {
+                    //                             console.log("updated Son data");
+                    //                         }
+                    //                     }
+                    //                 )
+                    //                 User.findByIdAndUpdate(
+                    //                     { _id: Wifecreate._id },
+                    //                     { $push: { Son: bodychildren.id }, },
+                    //                     function (err, result) {
+                    //                         if (err) {
+                    //                             console.log("cant update Son data", err)
+                    //                         } else {
+                    //                             console.log("updated Son data");
+                    //                         }
+                    //                     }
+                    //                 )
+
+
+
+                    //             })
+                    //         }
+
+
+
+
+                    //         // User.findByIdAndUpdate(
+                    //         //     {
+                    //         //         _id: users._id
+                    //         //     },
+                    //         //     {
+                    //         //         Wife: req.body.Spouse_ID,
+                    //         //     })
+
+                    //     }
+
+                    // }
+                    res.send(JSON.stringify(users))
+                    console.log("Ok");
+                    console.error("Error is ", err);
 
                 })
-                res.send(JSON.stringify(users))
-                console.log("Ok");
-                console.error(err);
             }
+            /////// Female Start
             else if (usr_dat.Gender == "Female") {
 
                 const users = new User(
@@ -268,7 +419,7 @@ const userdat = (req, res, fatherId, motherId) => {
                         App_UserID: req.body.App_UserID,
                     })
                 users.save(function (err) {
-                    //For Siblings
+                    // For Siblings
                     for (var i = 0; i < req.body.Siblings; i++) {
                         const sibling = new User(
                             {
@@ -310,7 +461,7 @@ const userdat = (req, res, fatherId, motherId) => {
 
 
                     // For Users
-                    // console.log("Appuser ID" + req.body.App_UserID)
+                    console.log("Appuser ID" + req.body.App_UserID)
                     console.log("New user created: " + JSON.stringify(users))
                     User.findByIdAndUpdate(
                         { _id: fatherId },
@@ -358,7 +509,7 @@ const userdat = (req, res, fatherId, motherId) => {
                                     _id: users._id
                                 },
                                 {
-                                    Husband: req.body.WifeName,
+                                    Husband: req.body.Wife,
                                 })
 
 
@@ -385,9 +536,13 @@ const userdat = (req, res, fatherId, motherId) => {
                 console.log("user exists")
             }
         }
-
     })
 }
+
+
+
+
+
 const fatherdat = (req, res, err) => {
     var usr_dat = req.body;
     console.log("Manual Entry Of father is ", usr_dat.ManualEntryFather)
@@ -401,7 +556,7 @@ const fatherdat = (req, res, err) => {
             }
         )
         users.save(function (err) {
-            console.log("FatherID: " + users._id)
+            console.log("FatherID: " + users + err)
             motherdat(req, res, users._id)
         })
     }
@@ -464,7 +619,9 @@ const fatherdat = (req, res, err) => {
 const motherdat = (req, res, husbandId) => {
     var usr_dat = req.body;
 
+    console.log("MotherData entered" + husbandId)
     if (usr_dat.ManualEntryMother == true && (usr_dat.Gender == "Male")) {
+        console.log("Entered Mother creation")
         const users = new User(
             {
                 Name: req.body.MotherName,
@@ -473,7 +630,8 @@ const motherdat = (req, res, husbandId) => {
             }
         )
         users.save(function (err) {
-            // console.log("Mother ID: " + users._id)
+            console.log("MotherID: " + users + err)
+
             userdat(req, res, husbandId, users._id);
         })
     }
