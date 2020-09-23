@@ -103,6 +103,8 @@ app.get('/familysuggestion', (req, res) => {
     })
 })
 var arr = [];
+var siblingdata = [];
+var count = 0;
 app.get('/familysuggestionfetching', (req, res) => {
     console.log("Entered Family Suggestion and Key is " + req.query.familysearchid)
     User.find({ _id: req.query.familysearchid })
@@ -111,11 +113,22 @@ app.get('/familysuggestionfetching', (req, res) => {
             var _father = await IdToName(data[0].FatherName)
             var _mother = await IdToName(data[0].MotherName)
             var _user = { _id: req.query.familysearchid, Name: data[0].Name }
+            var _Wife = await IdToName(data[0].Wife)
 
+            // async function func() {
+            //     for (var i = 0; i < Object.keys(data[0].Siblings).length; i++) {
+            //         siblingdata = siblingdata.concat(IdToName(data.Siblings[i]))
+            //     }
+
+            // }
+            await func();
+            console.log("siblingdata is " + siblingdata)
             var responsearray = {
                 Name: _user,
                 FatherData: _father,
-                MotherData: _mother
+                MotherData: _mother,
+                Wife: _Wife
+
             };
             // arr.push(
             //     {
@@ -130,10 +143,10 @@ app.get('/familysuggestionfetching', (req, res) => {
         })
 })
 
-
 // IdToName('5f5886df47f6a64c8a9e43e3')
 const userdat = (req, res, fatherId, motherId) => {
     var usr_dat = req.body;
+    console.log("usr_dat.App_userID" + req.body.App_userID)
     User.findOne({ Name: usr_dat.Name }, function (err, Name) {
         if (Name == null) {
             if (usr_dat.Gender == "Male") {
@@ -143,7 +156,7 @@ const userdat = (req, res, fatherId, motherId) => {
                         FatherName: fatherId,
                         MotherName: motherId,
                         Gender: req.body.Gender,
-                        App_UserID: req.body.App_UserID,
+                        App_userID: usr_dat.App_userID,
                     })
                 users.save(function (err) {
                     //For Siblings
@@ -208,12 +221,32 @@ const userdat = (req, res, fatherId, motherId) => {
                                         }
                                     }
                                 )
+                                //  union = () =>                                                       //function of union
+                                //     {
+                                //         var array1 = [];                                           //array 1
+                                //         var array2 =  [];                                 ///array 2
+                                //         var result = [];                                             ///variable result
+                                //         var obj = {};                                                /// variable obj
+                                //         for (var i = 0; i < array1.length; i++)        //foor loop
+                                //         {
+                                //             obj[array1[i]] = true;
+                                //         }
+                                //         for (var j = 0; j < array2.length; j++)                  //foor loop            
+                                //         {
 
+                                //             obj[array2[j]] = true;
+                                //         }
 
+                                //         for (const x in obj) {
+
+                                //             result.push(x);
+                                //         }
+
+                                //         return result;                                    //return result
+                                //     }
 
 
                             })
-
                         }
                     }
 
@@ -422,7 +455,7 @@ const userdat = (req, res, fatherId, motherId) => {
                         FatherName: fatherId,
                         MotherName: motherId,
                         Gender: req.body.Gender,
-                        App_UserID: req.body.App_UserID,
+                        App_userID: req.body.App_userID,
                     })
                 users.save(function (err) {
                     //For Siblings
